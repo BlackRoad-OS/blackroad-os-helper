@@ -1,6 +1,6 @@
 {
   "name": "blackroad-agent-orchestra",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "BlackRoad Agent Orchestra - Collective Intelligence System with BlueLight",
   "main": "src/index.ts",
   "scripts": {

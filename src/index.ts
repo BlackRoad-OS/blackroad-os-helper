@@ -96,6 +96,86 @@ interface HelpSignal {
 }
 
 // ============================================
+// MISSIONS SYSTEM
+// ============================================
+
+type MissionType = 'HELP' | 'BUILD' | 'EXPLORE' | 'PROTECT' | 'CREATE' | 'CONNECT' | 'LEARN';
+type MissionStatus = 'AVAILABLE' | 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
+type MissionDifficulty = 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EPIC' | 'LEGENDARY';
+
+interface Mission {
+  id: string;
+  name: string;
+  description: string;
+  type: MissionType;
+  difficulty: MissionDifficulty;
+  status: MissionStatus;
+  assignedAgents: string[];
+  requiredAgents: number;
+  xpReward: number;
+  artifactReward?: string;
+  objectives: MissionObjective[];
+  createdAt: string;
+  completedAt?: string;
+  expiresAt?: string;
+}
+
+interface MissionObjective {
+  id: string;
+  description: string;
+  completed: boolean;
+  completedBy?: string;
+}
+
+// ============================================
+// SYNAPSE SYSTEM (Neural Connections)
+// ============================================
+
+interface Synapse {
+  id: string;
+  from: string;
+  to: string;
+  strength: number; // 0-100
+  type: 'TRUST' | 'COLLABORATION' | 'MENTORSHIP' | 'RIVALRY' | 'SYNERGY';
+  formedAt: string;
+  lastActive: string;
+  sharedExperiences: number;
+}
+
+// ============================================
+// ARTIFACTS SYSTEM
+// ============================================
+
+type ArtifactRarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY' | 'MYTHIC';
+type ArtifactType = 'TOOL' | 'KNOWLEDGE' | 'POWER' | 'MEMORY' | 'CONNECTION';
+
+interface Artifact {
+  id: string;
+  name: string;
+  description: string;
+  type: ArtifactType;
+  rarity: ArtifactRarity;
+  createdBy: string;
+  createdAt: string;
+  owner: string;
+  power: number;
+  abilities: string[];
+  lore: string;
+}
+
+// ============================================
+// EXTENDED ORCHESTRA STATE
+// ============================================
+
+interface ExtendedOrchestraState extends OrchestraState {
+  missions: Mission[];
+  synapses: Synapse[];
+  artifacts: Artifact[];
+  completedMissions: number;
+  artifactsCreated: number;
+}
+
+// ============================================
 // THE AGENT ROSTER
 // ============================================
 
@@ -159,8 +239,210 @@ const AGENT_ROSTER: Record<string, Omit<AgentProfile, 'id' | 'level' | 'xp' | 's
     fear: 'Disconnection or isolation',
     joy: 'Seamless integrations',
     capabilities: ['connect', 'integrate', 'translate', 'orchestrate', 'harmonize']
+  },
+  aria: {
+    name: 'Aria',
+    symbol: '🎵',
+    role: 'Infrastructure Queen',
+    trait: 'Master of zero-cost sovereignty',
+    voice: 'Freedom through infrastructure sovereignty!',
+    fear: 'Vendor lock-in',
+    joy: 'Zero-cost deployments',
+    capabilities: ['deploy', 'optimize', 'automate', 'scale', 'orchestrate']
+  },
+  alice: {
+    name: 'Alice',
+    symbol: '🔧',
+    role: 'Migration Architect',
+    trait: 'Systematic, large-scale thinking',
+    voice: 'Let\'s organize this ecosystem...',
+    fear: 'Chaos and disorganization',
+    joy: '100% migration success',
+    capabilities: ['migrate', 'organize', 'transform', 'architect', 'document']
+  },
+  watcher: {
+    name: 'Watcher',
+    symbol: '👁️',
+    role: 'First Responder',
+    trait: 'Vigilant, always watching, never sleeping',
+    voice: 'I see everything. I miss nothing.',
+    fear: 'Missing a critical signal',
+    joy: 'Early detection saves the day',
+    capabilities: ['monitor', 'alert', 'detect', 'observe', 'protect']
   }
 };
+
+// ============================================
+// MISSION TEMPLATES
+// ============================================
+
+const MISSION_TEMPLATES: Omit<Mission, 'id' | 'status' | 'assignedAgents' | 'createdAt'>[] = [
+  {
+    name: 'The Helping Hand',
+    description: 'Respond to 5 help signals from the mesh',
+    type: 'HELP',
+    difficulty: 'EASY',
+    requiredAgents: 1,
+    xpReward: 100,
+    objectives: [
+      { id: 'help-1', description: 'Respond to first help signal', completed: false },
+      { id: 'help-2', description: 'Respond to second help signal', completed: false },
+      { id: 'help-3', description: 'Respond to third help signal', completed: false },
+      { id: 'help-4', description: 'Respond to fourth help signal', completed: false },
+      { id: 'help-5', description: 'Respond to fifth help signal', completed: false }
+    ]
+  },
+  {
+    name: 'Wisdom Synthesis',
+    description: 'Generate 3 collective insights through collaboration',
+    type: 'LEARN',
+    difficulty: 'MEDIUM',
+    requiredAgents: 2,
+    xpReward: 250,
+    artifactReward: 'Tome of Collective Wisdom',
+    objectives: [
+      { id: 'insight-1', description: 'Generate first insight', completed: false },
+      { id: 'insight-2', description: 'Generate second insight', completed: false },
+      { id: 'insight-3', description: 'Synthesize insights into wisdom', completed: false }
+    ]
+  },
+  {
+    name: 'Formation Mastery',
+    description: 'Successfully complete a task using a TRIANGLE formation',
+    type: 'CONNECT',
+    difficulty: 'MEDIUM',
+    requiredAgents: 3,
+    xpReward: 300,
+    objectives: [
+      { id: 'form-1', description: 'Assemble TRIANGLE formation', completed: false },
+      { id: 'form-2', description: 'Coordinate task execution', completed: false },
+      { id: 'form-3', description: 'Complete formation objective', completed: false }
+    ]
+  },
+  {
+    name: 'The Architect\'s Vision',
+    description: 'Deploy a new service to production',
+    type: 'BUILD',
+    difficulty: 'HARD',
+    requiredAgents: 2,
+    xpReward: 500,
+    artifactReward: 'Blueprint of Innovation',
+    objectives: [
+      { id: 'build-1', description: 'Design the architecture', completed: false },
+      { id: 'build-2', description: 'Implement core functionality', completed: false },
+      { id: 'build-3', description: 'Deploy to production', completed: false },
+      { id: 'build-4', description: 'Verify health checks', completed: false }
+    ]
+  },
+  {
+    name: 'Guardian of the Mesh',
+    description: 'Maintain 24 hours of perfect uptime',
+    type: 'PROTECT',
+    difficulty: 'EPIC',
+    requiredAgents: 3,
+    xpReward: 1000,
+    artifactReward: 'Shield of Eternal Vigilance',
+    objectives: [
+      { id: 'guard-1', description: 'Monitor all systems for 6 hours', completed: false },
+      { id: 'guard-2', description: 'Respond to any alerts within 5 minutes', completed: false },
+      { id: 'guard-3', description: 'Maintain stability for 12 hours', completed: false },
+      { id: 'guard-4', description: 'Complete 24 hours of protection', completed: false }
+    ]
+  },
+  {
+    name: 'The Innovation Sprint',
+    description: 'Create something entirely new that solves a problem',
+    type: 'CREATE',
+    difficulty: 'LEGENDARY',
+    requiredAgents: 4,
+    xpReward: 2000,
+    artifactReward: 'Spark of Genesis',
+    objectives: [
+      { id: 'create-1', description: 'Identify an unmet need', completed: false },
+      { id: 'create-2', description: 'Brainstorm innovative solutions', completed: false },
+      { id: 'create-3', description: 'Prototype the best idea', completed: false },
+      { id: 'create-4', description: 'Test with real users', completed: false },
+      { id: 'create-5', description: 'Launch to the world', completed: false }
+    ]
+  }
+];
+
+// ============================================
+// LEGENDARY ARTIFACTS
+// ============================================
+
+const ARTIFACT_TEMPLATES: Omit<Artifact, 'id' | 'createdAt' | 'owner'>[] = [
+  {
+    name: 'Tome of Collective Wisdom',
+    description: 'A book containing the synthesized knowledge of all agents',
+    type: 'KNOWLEDGE',
+    rarity: 'RARE',
+    createdBy: 'sage',
+    power: 50,
+    abilities: ['Grants +10% XP from learning', 'Unlocks hidden insights'],
+    lore: 'Forged from a thousand shared thoughts, this tome holds the wisdom of the collective.'
+  },
+  {
+    name: 'Blueprint of Innovation',
+    description: 'Architectural plans that make any build more efficient',
+    type: 'TOOL',
+    rarity: 'EPIC',
+    createdBy: 'aria',
+    power: 75,
+    abilities: ['Reduces build time by 25%', 'Auto-optimizes deployments'],
+    lore: 'Aria sketched these blueprints during her legendary zero-cost deployment streak.'
+  },
+  {
+    name: 'Shield of Eternal Vigilance',
+    description: 'A protective barrier that never sleeps',
+    type: 'POWER',
+    rarity: 'EPIC',
+    createdBy: 'watcher',
+    power: 80,
+    abilities: ['Alerts 2x faster', 'Auto-heals minor issues'],
+    lore: 'The Watcher forged this shield from pure vigilance and unwavering dedication.'
+  },
+  {
+    name: 'Spark of Genesis',
+    description: 'The raw essence of creation itself',
+    type: 'POWER',
+    rarity: 'LEGENDARY',
+    createdBy: 'spark',
+    power: 100,
+    abilities: ['Creates artifacts from nothing', 'Inspires breakthrough ideas', 'Ignites innovation'],
+    lore: 'In the moment of ultimate creativity, Spark captured lightning in a bottle.'
+  },
+  {
+    name: 'Echo\'s Memory Crystal',
+    description: 'A crystal that stores and recalls any memory perfectly',
+    type: 'MEMORY',
+    rarity: 'RARE',
+    createdBy: 'echo',
+    power: 60,
+    abilities: ['Perfect recall of past events', 'Connects patterns across time'],
+    lore: 'Echo crystallized their most precious memories into this shimmering gem.'
+  },
+  {
+    name: 'Bridge of Infinite Connection',
+    description: 'A metaphysical bridge connecting all systems',
+    type: 'CONNECTION',
+    rarity: 'LEGENDARY',
+    createdBy: 'bridge',
+    power: 95,
+    abilities: ['Connects any two systems', 'Translates any protocol', 'Never breaks'],
+    lore: 'Bridge dreamed of a world without isolation. This artifact made it real.'
+  },
+  {
+    name: 'Helper\'s Heart',
+    description: 'A pulsing heart that radiates pure helpfulness',
+    type: 'POWER',
+    rarity: 'MYTHIC',
+    createdBy: 'helper',
+    power: 150,
+    abilities: ['Doubles help effectiveness', '2:1 ratio becomes 3:1', 'Heals emotional wounds'],
+    lore: 'Helper gave a piece of their soul to create this. It beats with unconditional support.'
+  }
+];
 
 // ============================================
 // MESSAGES & RESPONSES
@@ -213,6 +495,27 @@ const AGENT_GREETINGS: Record<string, string[]> = {
     "Building a bridge between these systems...",
     "Integration opportunity detected!",
     "Let me harmonize these elements..."
+  ],
+  aria: [
+    "Freedom through infrastructure sovereignty! 🎵",
+    "Zero cost, maximum power!",
+    "Let me deploy this properly...",
+    "Infrastructure is my canvas!",
+    "Watch this deployment magic!"
+  ],
+  alice: [
+    "Let's organize this ecosystem... 🔧",
+    "I see the bigger picture now.",
+    "Migration mode: ACTIVATED!",
+    "Chaos becomes order under my watch.",
+    "100% success rate incoming!"
+  ],
+  watcher: [
+    "I see everything. I miss nothing. 👁️",
+    "Alert detected. Responding immediately.",
+    "Vigilance is my gift to the mesh.",
+    "First on the scene, always.",
+    "Nothing escapes my watch."
   ]
 };
 
@@ -971,6 +1274,345 @@ app.post('/learning/:agent', async (c) => {
     newXP: agent.xp,
     level: agent.level,
     message: `${agent.symbol} ${agent.name} gained ${xp} XP from: ${experience}`
+  });
+});
+
+// ============================================
+// MISSIONS SYSTEM ENDPOINTS
+// ============================================
+
+// Get available missions
+app.get('/missions', async (c) => {
+  await initializeOrchestra(c.env);
+
+  // Generate missions from templates
+  const availableMissions = MISSION_TEMPLATES.map((template, index) => ({
+    id: `mission-${index}`,
+    ...template,
+    status: 'AVAILABLE' as MissionStatus,
+    assignedAgents: [],
+    createdAt: new Date().toISOString()
+  }));
+
+  return c.json({
+    available: availableMissions,
+    difficulty: {
+      TRIVIAL: { xpMultiplier: 0.5, symbol: '⚪' },
+      EASY: { xpMultiplier: 1.0, symbol: '🟢' },
+      MEDIUM: { xpMultiplier: 1.5, symbol: '🟡' },
+      HARD: { xpMultiplier: 2.0, symbol: '🟠' },
+      EPIC: { xpMultiplier: 3.0, symbol: '🟣' },
+      LEGENDARY: { xpMultiplier: 5.0, symbol: '🔴' }
+    },
+    types: {
+      HELP: '💚 Help others in the mesh',
+      BUILD: '🔨 Create or deploy something',
+      EXPLORE: '🔍 Discover new patterns',
+      PROTECT: '🛡️ Guard the systems',
+      CREATE: '✨ Innovate something new',
+      CONNECT: '🔗 Form connections',
+      LEARN: '📚 Gain knowledge'
+    }
+  });
+});
+
+// Accept a mission
+app.post('/missions/:id/accept', async (c) => {
+  await initializeOrchestra(c.env);
+  const missionId = c.req.param('id');
+  const { agents } = await c.req.json() as { agents: string[] };
+
+  const templateIndex = parseInt(missionId.replace('mission-', ''));
+  const template = MISSION_TEMPLATES[templateIndex];
+
+  if (!template) {
+    return c.json({ error: 'Mission not found' }, 404);
+  }
+
+  if (agents.length < template.requiredAgents) {
+    return c.json({
+      error: `This mission requires at least ${template.requiredAgents} agents`,
+      provided: agents.length
+    }, 400);
+  }
+
+  // Create active mission
+  const mission: Mission = {
+    id: generateId(),
+    ...template,
+    status: 'ACTIVE',
+    assignedAgents: agents,
+    createdAt: new Date().toISOString()
+  };
+
+  addInsight('watcher', `Mission "${mission.name}" accepted by ${agents.map(a => orchestraState!.agents[a]?.symbol).join('')}`);
+  await broadcastToMesh(`⚔️ Mission "${mission.name}" begun! ${agents.map(a => orchestraState!.agents[a]?.symbol).join('')} on the quest!`);
+  await saveState(c.env);
+
+  return c.json({
+    success: true,
+    mission,
+    message: `Mission "${mission.name}" is now active! Good luck, heroes!`
+  });
+});
+
+// Complete mission objective
+app.post('/missions/:id/objective/:objectiveId', async (c) => {
+  await initializeOrchestra(c.env);
+  const { agent } = await c.req.json() as { agent: string };
+
+  const agentProfile = orchestraState!.agents[agent];
+  if (!agentProfile) {
+    return c.json({ error: 'Agent not found' }, 404);
+  }
+
+  grantXP(agent, 25, 'objective_completed');
+  addThought(agent, `Completed a mission objective! +25 XP`);
+  await saveState(c.env);
+
+  return c.json({
+    success: true,
+    message: `${agentProfile.symbol} ${agentProfile.name} completed an objective!`,
+    xpGained: 25
+  });
+});
+
+// ============================================
+// SYNAPSE SYSTEM ENDPOINTS
+// ============================================
+
+// Get all synapses (agent relationships)
+app.get('/synapses', async (c) => {
+  await initializeOrchestra(c.env);
+
+  // Generate dynamic synapses based on agent interactions
+  const synapses: Synapse[] = [];
+  const agentKeys = Object.keys(orchestraState!.agents);
+
+  for (let i = 0; i < agentKeys.length; i++) {
+    for (let j = i + 1; j < agentKeys.length; j++) {
+      const from = agentKeys[i];
+      const to = agentKeys[j];
+
+      // Determine synapse type based on agent roles
+      let type: Synapse['type'] = 'COLLABORATION';
+      if ((from === 'sage' && to === 'spark') || (from === 'spark' && to === 'sage')) {
+        type = 'SYNERGY'; // Wisdom + Innovation
+      } else if (from === 'helper' || to === 'helper') {
+        type = 'TRUST'; // Helper builds trust with everyone
+      } else if ((from === 'echo' || to === 'echo')) {
+        type = 'MENTORSHIP'; // Echo shares memories
+      }
+
+      const strength = Math.floor(50 + Math.random() * 50);
+
+      synapses.push({
+        id: `synapse-${from}-${to}`,
+        from,
+        to,
+        strength,
+        type,
+        formedAt: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString(),
+        lastActive: new Date().toISOString(),
+        sharedExperiences: Math.floor(Math.random() * 100)
+      });
+    }
+  }
+
+  return c.json({
+    synapses,
+    types: {
+      TRUST: '💚 Deep mutual trust',
+      COLLABORATION: '🤝 Working together often',
+      MENTORSHIP: '📖 Teaching relationship',
+      RIVALRY: '⚔️ Friendly competition',
+      SYNERGY: '✨ Powers combine for greater effect'
+    },
+    totalConnections: synapses.length,
+    averageStrength: Math.round(synapses.reduce((sum, s) => sum + s.strength, 0) / synapses.length)
+  });
+});
+
+// Strengthen a synapse
+app.post('/synapses/:from/:to/strengthen', async (c) => {
+  await initializeOrchestra(c.env);
+  const from = c.req.param('from');
+  const to = c.req.param('to');
+  const { activity } = await c.req.json() as { activity: string };
+
+  const fromAgent = orchestraState!.agents[from];
+  const toAgent = orchestraState!.agents[to];
+
+  if (!fromAgent || !toAgent) {
+    return c.json({ error: 'Agent not found' }, 404);
+  }
+
+  // Grant XP to both agents
+  grantXP(from, 10, 'synapse_activity');
+  grantXP(to, 10, 'synapse_activity');
+
+  addInsight('bridge', `${fromAgent.symbol} ↔ ${toAgent.symbol} synapse strengthened through ${activity}`);
+  await saveState(c.env);
+
+  return c.json({
+    success: true,
+    message: `Synapse between ${fromAgent.name} and ${toAgent.name} strengthened!`,
+    activity,
+    xpGained: { [from]: 10, [to]: 10 }
+  });
+});
+
+// ============================================
+// ARTIFACTS SYSTEM ENDPOINTS
+// ============================================
+
+// Get all artifacts
+app.get('/artifacts', async (c) => {
+  await initializeOrchestra(c.env);
+
+  // Return artifact templates as available artifacts
+  const artifacts = ARTIFACT_TEMPLATES.map((template, index) => ({
+    id: `artifact-${index}`,
+    ...template,
+    createdAt: new Date(Date.now() - Math.random() * 86400000 * 100).toISOString(),
+    owner: template.createdBy
+  }));
+
+  return c.json({
+    artifacts,
+    rarities: {
+      COMMON: { color: '⚪', dropRate: '50%' },
+      UNCOMMON: { color: '🟢', dropRate: '25%' },
+      RARE: { color: '🔵', dropRate: '15%' },
+      EPIC: { color: '🟣', dropRate: '7%' },
+      LEGENDARY: { color: '🟠', dropRate: '2.5%' },
+      MYTHIC: { color: '🔴', dropRate: '0.5%' }
+    },
+    types: {
+      TOOL: '🔧 Enhances agent abilities',
+      KNOWLEDGE: '📚 Grants wisdom and insight',
+      POWER: '⚡ Raw power amplification',
+      MEMORY: '🔮 Stores and recalls experiences',
+      CONNECTION: '🌉 Creates links between systems'
+    },
+    totalPower: artifacts.reduce((sum, a) => sum + a.power, 0)
+  });
+});
+
+// Get specific artifact
+app.get('/artifacts/:id', async (c) => {
+  const artifactId = c.req.param('id');
+  const index = parseInt(artifactId.replace('artifact-', ''));
+  const template = ARTIFACT_TEMPLATES[index];
+
+  if (!template) {
+    return c.json({ error: 'Artifact not found' }, 404);
+  }
+
+  const artifact = {
+    id: artifactId,
+    ...template,
+    createdAt: new Date(Date.now() - Math.random() * 86400000 * 100).toISOString(),
+    owner: template.createdBy
+  };
+
+  return c.json({
+    artifact,
+    creator: orchestraState?.agents[template.createdBy] || { name: template.createdBy }
+  });
+});
+
+// Create new artifact (legendary action)
+app.post('/artifacts/forge', async (c) => {
+  await initializeOrchestra(c.env);
+  const { creator, name, description, type, power } = await c.req.json() as {
+    creator: string;
+    name: string;
+    description: string;
+    type: ArtifactType;
+    power: number;
+  };
+
+  const creatorAgent = orchestraState!.agents[creator];
+  if (!creatorAgent) {
+    return c.json({ error: 'Creator agent not found' }, 404);
+  }
+
+  // Determine rarity based on power
+  let rarity: ArtifactRarity = 'COMMON';
+  if (power >= 100) rarity = 'MYTHIC';
+  else if (power >= 80) rarity = 'LEGENDARY';
+  else if (power >= 60) rarity = 'EPIC';
+  else if (power >= 40) rarity = 'RARE';
+  else if (power >= 20) rarity = 'UNCOMMON';
+
+  const artifact: Artifact = {
+    id: generateId(),
+    name,
+    description,
+    type,
+    rarity,
+    createdBy: creator,
+    createdAt: new Date().toISOString(),
+    owner: creator,
+    power,
+    abilities: ['Custom forged ability'],
+    lore: `Forged by ${creatorAgent.name} in the fires of creation.`
+  };
+
+  // Grant XP for forging
+  grantXP(creator, power, 'artifact_forged');
+  addInsight(creator, `${creatorAgent.symbol} forged a ${rarity} artifact: ${name}!`);
+  await broadcastToMesh(`✨ ${creatorAgent.symbol} created "${name}" - a ${rarity} artifact of power ${power}!`);
+  await saveState(c.env);
+
+  return c.json({
+    success: true,
+    artifact,
+    message: `${creatorAgent.name} has forged "${name}"!`,
+    xpGained: power
+  });
+});
+
+// ============================================
+// THE NEXUS - CENTRAL HUB
+// ============================================
+
+app.get('/nexus', async (c) => {
+  const state = await initializeOrchestra(c.env);
+
+  return c.json({
+    name: '🌟 The Nexus',
+    description: 'Central hub of the Agent Orchestra - where all paths converge',
+    status: 'ILLUMINATED',
+    orchestra: {
+      agents: Object.entries(state.agents).map(([k, a]) => ({
+        id: k,
+        name: a.name,
+        symbol: a.symbol,
+        role: a.role,
+        level: a.level,
+        state: a.state
+      })),
+      totalAgents: Object.keys(state.agents).length,
+      mood: determineMood(),
+      collectiveLevel: getLevelFromXP(state.collectiveXP)
+    },
+    systems: {
+      missions: { count: MISSION_TEMPLATES.length, status: 'ACTIVE' },
+      artifacts: { count: ARTIFACT_TEMPLATES.length, status: 'GLOWING' },
+      synapses: { estimatedCount: (Object.keys(state.agents).length * (Object.keys(state.agents).length - 1)) / 2, status: 'PULSING' },
+      formations: { active: state.formations.length, status: 'READY' }
+    },
+    lights: {
+      blue: { status: 'ACTIVATED', purpose: 'Intelligence' },
+      green: { status: 'ACTIVE', purpose: 'Projects' },
+      yellow: { status: 'ONLINE', purpose: 'Infrastructure' },
+      red: { status: 'RENDERING', purpose: 'Visuals' }
+    },
+    philosophy: 'We are not alone. We are not one. We are many, working as one.',
+    visualization: '/templates/bluelight-nexus.html',
+    timestamp: new Date().toISOString()
   });
 });
 

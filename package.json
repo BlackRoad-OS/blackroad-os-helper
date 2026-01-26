@@ -1,7 +1,7 @@
 {
-  "name": "blackroad-helper",
-  "version": "1.0.0",
-  "description": "BlackRoad Demo Agent - Helper (Second Responder)",
+  "name": "blackroad-agent-orchestra",
+  "version": "2.4.0",
+  "description": "BlackRoad Agent Orchestra - Collective Intelligence System with BlueLight",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",

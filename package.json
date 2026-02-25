@@ -11,7 +11,7 @@
     "hono": "^4.12.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240117.0",
+    "@cloudflare/workers-types": "^4.20260304.0",
     "eslint": "^9.39.2",
     "prettier": "^3.7.4",
     "typescript": "^5.0.0",

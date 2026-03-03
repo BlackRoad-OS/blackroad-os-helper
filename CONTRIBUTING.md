@@ -2,6 +2,22 @@
 
 Thank you for considering contributing to this BlackRoad OS project! 🎉
 
+> ⚠️ **A valid Contributor API Key is required before you can contribute.**  
+> All API endpoints enforce authentication via the `X-BlackRoad-API-Key` header.  
+> To obtain a key, contact [blackroad.systems@gmail.com](mailto:blackroad.systems@gmail.com) or visit [blackroad.io](https://blackroad.io).
+
+## Contributor API Key
+
+Every contributor **must** have a valid BlackRoad Contributor API Key to access any endpoint.
+
+When making API calls, include the following header:
+
+```
+X-BlackRoad-API-Key: <your-key>
+```
+
+Without a valid key, all requests return `401 Unauthorized`. This is enforced at the infrastructure level — no exceptions.
+
 ## Code of Conduct
 
 This project follows our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold this code.

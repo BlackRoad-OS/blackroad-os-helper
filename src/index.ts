@@ -5,6 +5,9 @@
  * When someone calls for help, Helper comes running alongside Watcher.
  *
  * "I am Helper. When you call, I answer. Always."
+ *
+ * © 2024-2026 BlackRoad OS, Inc. All Rights Reserved.
+ * PROPRIETARY — Access requires a valid Contributor API Key.
  */
 
 import { Hono } from 'hono';
@@ -15,6 +18,8 @@ const MESH_URL = 'https://blackroad-mesh.amundsonalexa.workers.dev';
 
 interface Env {
   AGENT_STATE: KVNamespace;
+  BLACKROAD_CONTRIBUTOR_API_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
 }
 
 interface AgentState {
@@ -40,6 +45,37 @@ interface HelpSignal {
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', cors({ origin: '*' }));
+
+// ============================================
+// CONTRIBUTOR API KEY MIDDLEWARE
+// All routes except /health and /webhooks/stripe
+// require a valid X-BlackRoad-API-Key header.
+// ============================================
+
+app.use('*', async (c, next) => {
+  const path = new URL(c.req.url).pathname;
+
+  // Public routes - no key required
+  if (path === '/health' || path.startsWith('/webhooks/')) {
+    return next();
+  }
+
+  const apiKey = c.req.header('X-BlackRoad-API-Key');
+  const expectedKey = c.env.BLACKROAD_CONTRIBUTOR_API_KEY;
+
+  if (!expectedKey || !apiKey || apiKey !== expectedKey) {
+    return c.json(
+      {
+        error: 'Unauthorized',
+        message:
+          'A valid Contributor API Key is required. Contact blackroad.systems@gmail.com or visit blackroad.io to obtain access.',
+      },
+      401
+    );
+  }
+
+  return next();
+});
 
 let agentIdentity: string | null = null;
 let agentState: AgentState | null = null;
@@ -300,6 +336,99 @@ app.get('/stats', async (c) => {
 app.get('/health', async (c) => {
   return c.json({ status: 'healthy', agent: 'helper' });
 });
+
+// ============================================
+// STRIPE WEBHOOK
+// ============================================
+
+app.post('/webhooks/stripe', async (c) => {
+  const webhookSecret = c.env.STRIPE_WEBHOOK_SECRET;
+  const signature = c.req.header('stripe-signature') ?? '';
+  const rawBody = await c.req.text();
+
+  // Verify Stripe webhook signature
+  if (webhookSecret && signature) {
+    const isValid = await verifyStripeSignature(rawBody, signature, webhookSecret);
+    if (!isValid) {
+      return c.json({ error: 'Invalid Stripe signature' }, 400);
+    }
+  }
+
+  let event: { type: string; data: { object: Record<string, unknown> } };
+  try {
+    event = JSON.parse(rawBody);
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  console.log(`[Helper] Stripe event received: ${event.type}`);
+
+  switch (event.type) {
+    case 'checkout.session.completed':
+      console.log('[Helper] Checkout session completed:', event.data.object);
+      break;
+    case 'customer.subscription.created':
+      console.log('[Helper] Subscription created:', event.data.object);
+      break;
+    case 'customer.subscription.updated':
+      console.log('[Helper] Subscription updated:', event.data.object);
+      break;
+    case 'invoice.paid':
+      console.log('[Helper] Invoice paid:', event.data.object);
+      break;
+    default:
+      console.log(`[Helper] Unhandled Stripe event type: ${event.type}`);
+  }
+
+  return c.json({ received: true });
+});
+
+/**
+ * Verify a Stripe webhook signature using the Web Crypto API.
+ * Stripe signs payloads with HMAC-SHA256.
+ */
+async function verifyStripeSignature(
+  payload: string,
+  signature: string,
+  secret: string
+): Promise<boolean> {
+  try {
+    // Parse t= and v1= from the signature header.
+    // Split only on the first '=' so values that contain '=' (e.g. base64) are handled correctly.
+    const parts: Record<string, string> = {};
+    for (const segment of signature.split(',')) {
+      const idx = segment.indexOf('=');
+      if (idx !== -1) {
+        parts[segment.slice(0, idx)] = segment.slice(idx + 1);
+      }
+    }
+    const timestamp = parts['t'];
+    const expectedSig = parts['v1'];
+    if (!timestamp || !expectedSig) return false;
+
+    const signedPayload = `${timestamp}.${payload}`;
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secret);
+    const msgData = encoder.encode(signedPayload);
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const sigBuffer = await crypto.subtle.sign('HMAC', key, msgData);
+    const computed = Array.from(new Uint8Array(sigBuffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    return computed === expectedSig;
+  } catch {
+    return false;
+  }
+}
 
 // Cron - check for help signals every 5 minutes (offset from Watcher)
 app.get('/cron', async (c) => {

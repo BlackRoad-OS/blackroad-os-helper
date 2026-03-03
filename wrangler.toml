@@ -1,5 +1,5 @@
 name = "blackroad-os-helper"
-main = "src/index.js"
+main = "src/index.ts"
 compatibility_date = "2024-12-01"
 account_id = "848cf0b18d51e0170e0d1537aec3505a"
 
@@ -12,3 +12,7 @@ ENVIRONMENT = "production"
 # [[kv_namespaces]]
 # binding = "CACHE"
 # id = "YOUR_KV_ID"
+
+# Secrets (set via `wrangler secret put`):
+#   BLACKROAD_CONTRIBUTOR_API_KEY  – required for contributor/API access
+#   STRIPE_WEBHOOK_SECRET          – Stripe webhook signing secret

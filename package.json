@@ -5,7 +5,10 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "build": "npx tsc --noEmit",
+    "typecheck": "npx tsc --noEmit",
+    "lint": "eslint src --ext .ts"
   },
   "dependencies": {
     "hono": "^4.12.5"

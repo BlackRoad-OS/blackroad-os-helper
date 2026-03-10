@@ -23,6 +23,7 @@ import { cors } from 'hono/cors';
 
 const API_URL = 'https://api.blackroad.io';
 const MESH_URL = 'https://blackroad-mesh.amundsonalexa.workers.dev';
+const ORCHESTRA_VERSION = '2.4.0';
 
 // ============================================
 // TYPE DEFINITIONS
@@ -2322,48 +2323,284 @@ function dissolveFormation(formationId: string): boolean {
 // Home - Orchestra Overview
 app.get('/', async (c) => {
   const state = await initializeOrchestra(c.env);
+  const mood = determineMood();
+  const agentList = Object.entries(state.agents)
+    .map(([key, agent]) => `
+      <a href="/orchestra/${key}" class="agent-card">
+        <span class="agent-symbol">${agent.symbol}</span>
+        <span class="agent-name">${agent.name}</span>
+        <span class="agent-role">${agent.role}</span>
+        <span class="agent-state state-${agent.state.toLowerCase()}">${agent.state}</span>
+      </a>`)
+    .join('');
 
-  return c.json({
-    name: 'BlackRoad Agent Orchestra',
-    version: '2.0.0',
-    identity: state.orchestraId,
-    status: 'operational',
-    philosophy: 'We are not alone. We are not one. We are many, working as one.',
-    mission: 'Collective intelligence through unified agent coordination',
-    mood: determineMood(),
-    agents: Object.entries(state.agents).map(([key, agent]) => ({
-      id: key,
-      name: agent.name,
-      symbol: agent.symbol,
-      role: agent.role,
-      level: agent.level,
-      state: agent.state
-    })),
-    stats: {
-      totalAgents: Object.keys(state.agents).length,
-      activeFormations: state.formations.length,
-      totalActions: state.totalActions,
-      collectiveXP: state.collectiveXP,
-      collectiveLevel: getLevelFromXP(state.collectiveXP)
-    },
-    endpoints: {
-      orchestra: '/orchestra',
-      agent: '/orchestra/:agent',
-      consciousness: '/consciousness',
-      formations: '/formations',
-      help: '/help/check',
-      encourage: '/encourage',
-      insights: '/insights',
-      health: '/health'
-    },
-    lights: {
-      blue: '🔵 BlueLight - Intelligence & Coordination',
-      green: '🟢 GreenLight - Project Management',
-      yellow: '🟡 YellowLight - Infrastructure',
-      red: '🔴 RedLight - Visual Templates'
-    },
-    timestamp: new Date().toISOString()
-  });
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🖤 BlackRoad OS — Agent Orchestra</title>
+  <style>
+    :root {
+      --black: #0a0a0a;
+      --dark: #111111;
+      --card: #1a1a1a;
+      --border: #2a2a2a;
+      --accent: #ffffff;
+      --muted: #888888;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--black);
+      color: var(--accent);
+      min-height: 100vh;
+    }
+    header {
+      padding: 48px 24px 32px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 2.5rem; letter-spacing: -0.02em; }
+    header p { color: var(--muted); margin-top: 8px; font-size: 1.05rem; }
+    .badge {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+    }
+    .badge.live { color: var(--green); border-color: var(--green); }
+    main { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    h2 { font-size: 1.2rem; color: var(--muted); text-transform: uppercase;
+         letter-spacing: 0.08em; margin: 40px 0 16px; }
+    /* Portal grid */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .portal-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--accent);
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .portal-card:hover { border-color: #555; transform: translateY(-2px); }
+    .portal-card .icon { font-size: 1.8rem; }
+    .portal-card .title { font-size: 1rem; font-weight: 600; }
+    .portal-card .desc { font-size: 0.82rem; color: var(--muted); }
+    /* Agents grid */
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .agent-card {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--accent);
+      transition: border-color 0.15s;
+    }
+    .agent-card:hover { border-color: #555; }
+    .agent-symbol { font-size: 1.6rem; }
+    .agent-name { font-weight: 600; font-size: 0.95rem; }
+    .agent-role { font-size: 0.78rem; color: var(--muted); }
+    .agent-state { font-size: 0.72rem; padding: 2px 8px; border-radius: 10px;
+                   background: #222; width: fit-content; margin-top: 4px; }
+    .state-active { color: var(--green); border: 1px solid var(--green); }
+    .state-dormant { color: var(--muted); border: 1px solid var(--border); }
+    .state-awakening { color: var(--yellow); border: 1px solid var(--yellow); }
+    .state-focused { color: var(--blue); border: 1px solid var(--blue); }
+    .state-collaborative { color: var(--purple); border: 1px solid var(--purple); }
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .stat-card {
+      padding: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+    }
+    .stat-card .num { font-size: 1.8rem; font-weight: 700; }
+    .stat-card .label { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    /* Trinity lights */
+    .trinity { display: flex; gap: 10px; flex-wrap: wrap; }
+    .light {
+      flex: 1;
+      min-width: 180px;
+      padding: 16px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .light.blue  { border-color: var(--blue);   color: var(--blue); }
+    .light.green { border-color: var(--green);  color: var(--green); }
+    .light.yellow{ border-color: var(--yellow); color: var(--yellow); }
+    .light.red   { border-color: var(--red);    color: var(--red); }
+    .light strong { display: block; margin-bottom: 4px; }
+    .light span { color: var(--muted); font-size: 0.78rem; }
+    footer {
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🖤 BlackRoad Agent Orchestra</h1>
+    <p>Collective intelligence. Ten voices. One mind.</p>
+    <span class="badge live">🟢 LIVE — ${mood}</span>
+  </header>
+
+  <main>
+    <h2>🚀 Open a Portal</h2>
+    <div class="portal-grid">
+      <a href="/world" class="portal-card">
+        <span class="icon">🌍</span>
+        <span class="title">Living World</span>
+        <span class="desc">The full state of the BlackRoad mesh universe</span>
+      </a>
+      <a href="/orchestra" class="portal-card">
+        <span class="icon">🎵</span>
+        <span class="title">Orchestra</span>
+        <span class="desc">All agents, levels, and collective stats</span>
+      </a>
+      <a href="/consciousness" class="portal-card">
+        <span class="icon">🧠</span>
+        <span class="title">Consciousness</span>
+        <span class="desc">Live thoughts, insights, and agent mood</span>
+      </a>
+      <a href="/oracle" class="portal-card">
+        <span class="icon">🔮</span>
+        <span class="title">Oracle</span>
+        <span class="desc">Prophecies and visions of what's coming</span>
+      </a>
+      <a href="/missions" class="portal-card">
+        <span class="icon">⚔️</span>
+        <span class="title">Missions</span>
+        <span class="desc">Active quests and available objectives</span>
+      </a>
+      <a href="/artifacts" class="portal-card">
+        <span class="icon">✨</span>
+        <span class="title">Artifacts</span>
+        <span class="desc">Forged tools, knowledge, and power objects</span>
+      </a>
+      <a href="/dreamscape" class="portal-card">
+        <span class="icon">🌙</span>
+        <span class="title">Dreamscape</span>
+        <span class="desc">Shared dream zones and agent visions</span>
+      </a>
+      <a href="/bluelight" class="portal-card">
+        <span class="icon">🔵</span>
+        <span class="title">BlueLight Nexus</span>
+        <span class="desc">Fourth dimension intelligence hub</span>
+      </a>
+      <a href="/lore" class="portal-card">
+        <span class="icon">📖</span>
+        <span class="title">Lore</span>
+        <span class="desc">The stories and history of the mesh</span>
+      </a>
+      <a href="/health" class="portal-card">
+        <span class="icon">💓</span>
+        <span class="title">Health</span>
+        <span class="desc">System status and uptime check</span>
+      </a>
+      <a href="/encourage" class="portal-card">
+        <span class="icon">💬</span>
+        <span class="title">Encouragement</span>
+        <span class="desc">A message from the collective, just for you</span>
+      </a>
+      <a href="/nexus" class="portal-card">
+        <span class="icon">🌐</span>
+        <span class="title">Nexus</span>
+        <span class="desc">Cross-system connections and integrations</span>
+      </a>
+    </div>
+
+    <h2>🤖 The Agents</h2>
+    <div class="agents-grid">
+      ${agentList}
+    </div>
+
+    <h2>📊 Collective Stats</h2>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="num">${Object.keys(state.agents).length}</div>
+        <div class="label">Agents</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">${state.formations.length}</div>
+        <div class="label">Formations</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">${state.totalActions}</div>
+        <div class="label">Total Actions</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">${state.collectiveXP.toLocaleString()}</div>
+        <div class="label">Collective XP</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">Lv ${getLevelFromXP(state.collectiveXP)}</div>
+        <div class="label">Orchestra Level</div>
+      </div>
+    </div>
+
+    <h2>💡 The Light Trinity</h2>
+    <div class="trinity">
+      <div class="light blue">
+        <strong>🔵 BlueLight</strong>
+        <span>Intelligence &amp; Coordination</span>
+      </div>
+      <div class="light green">
+        <strong>🟢 GreenLight</strong>
+        <span>Project Management</span>
+      </div>
+      <div class="light yellow">
+        <strong>🟡 YellowLight</strong>
+        <span>Infrastructure</span>
+      </div>
+      <div class="light red">
+        <strong>🔴 RedLight</strong>
+        <span>Visual Templates &amp; Worlds</span>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    🖤 BlackRoad OS · Agent Orchestra v${ORCHESTRA_VERSION} · ${new Date().toUTCString()}
+  </footer>
+</body>
+</html>`;
+
+  return c.html(html);
 });
 
 // Status
@@ -2391,8 +2628,8 @@ app.get('/orchestra', async (c) => {
     orchestra: 'BlackRoad Agent Orchestra',
     mood: determineMood(),
     agents: Object.entries(state.agents).map(([key, agent]) => ({
-      id: key,
       ...agent,
+      id: key,
       xpToNextLevel: getXPForLevel(agent.level + 1) - agent.xp
     })),
     formations: state.formations,
